@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>New Order — La Maison Restaurant</title>
+<meta name="description" content="Place a new restaurant order — select customer, table, items and checkout."/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><span class="logo-icon">🍽️</span><h2>La Maison</h2><span>Restaurant Management</span></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html"     class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="orders.html"    class="nav-link"><span class="nav-icon">🧾</span> Orders</a>
+      <a href="new-order.html" class="nav-link active"><span class="nav-icon">➕</span> New Order</a>
+      <a href="payment.html"   class="nav-link"><span class="nav-icon">💳</span> Payments</a>
+      <div class="nav-section-label">Catalog</div>
+      <a href="menu.html"      class="nav-link"><span class="nav-icon">📋</span> Menu Items</a>
+      <a href="recommend.html" class="nav-link"><span class="nav-icon">🤖</span> AI Recommendations</a>
+      <div class="nav-section-label">People</div>
+      <a href="customers.html" class="nav-link"><span class="nav-icon">👥</span> Customers</a>
+      <a href="staff.html"     class="nav-link"><span class="nav-icon">👨‍🍳</span> Staff</a>
+      <a href="tables.html"    class="nav-link"><span class="nav-icon">🪑</span> Tables</a>
+    </nav>
+    <div class="sidebar-footer"><span class="connection-dot"></span> MySQL Connected</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title"><h1>➕ New Order</h1><p>Select customer, table, and menu items</p></div>
+      <div class="topbar-actions"><span class="topbar-time" id="topbar-clock"></span></div>
+    </header>
+
+    <div class="page-content">
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+
+        <!-- LEFT: order form -->
+        <div>
+          <!-- Step 1 -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header"><div class="card-title">Step 1 — Customer & Table</div></div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Customer</label>
+                <select class="form-control" id="sel-customer">
+                  <option value="">Select customer…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Table</label>
+                <select class="form-control" id="sel-table">
+                  <option value="">Select table…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Served By (Staff)</label>
+                <select class="form-control" id="sel-staff">
+                  <option value="">Select staff…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Payment Mode</label>
+                <select class="form-control" id="sel-payment-mode">
+                  <option>Cash</option><option>Card</option>
+                  <option>UPI</option><option>Online</option>
+                </select>
+              </div>
+              <div class="form-group col-span-2">
+                <label class="form-label">Special Notes</label>
+                <input type="text" class="form-control" id="inp-notes" placeholder="Allergies, preferences…"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Menu -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Step 2 — Select Items</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap" id="cat-filters">
+                <button class="btn btn-primary btn-sm cat-btn" data-cat="">All</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Starter">Starter</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Main Course">Main</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Dessert">Dessert</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Beverage">Drinks</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Snack">Snack</button>
+                <button class="btn btn-secondary btn-sm cat-btn" data-cat="Combo">Combo</button>
+              </div>
+            </div>
+            <div class="search-box" style="margin-bottom:16px">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="menu-search" placeholder="Search dishes…"/>
+            </div>
+            <div id="menu-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Cart -->
+        <div style="position:sticky;top:90px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🛒 Order Summary</div>
+              <span id="cart-count" class="nav-badge">0 items</span>
+            </div>
+            <div id="cart-items">
+              <div class="empty-state">
+                <div class="empty-state-icon">🛒</div>
+                <h3>Cart is empty</h3>
+                <p>Add items from the menu</p>
+              </div>
+            </div>
+            <div id="cart-total-section" style="display:none;border-top:1px solid var(--glass-border);padding-top:16px;margin-top:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.85rem;color:var(--text-secondary)">
+                <span>Subtotal</span><span id="subtotal-val">₹0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.85rem;color:var(--text-secondary)">
+                <span>Tax (5%)</span><span id="tax-val">₹0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:800;color:var(--accent);margin-bottom:18px">
+                <span>Total</span><span id="total-val">₹0</span>
+              </div>
+              <button class="btn btn-primary" style="width:100%" id="place-order-btn">
+                🧾 Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <div style="font-size:4rem;margin-bottom:16px">🎉</div>
+    <h2 style="font-size:1.4rem;margin-bottom:8px;color:var(--accent)">Order Placed!</h2>
+    <p style="color:var(--text-secondary);margin-bottom:6px">Order ID: <strong id="success-order-id"></strong></p>
+    <p style="color:var(--text-secondary);margin-bottom:24px">Total: <strong id="success-total" style="color:var(--accent)"></strong></p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <a href="payment.html" class="btn btn-primary">💳 Process Payment</a>
+      <a href="orders.html" class="btn btn-secondary">View Orders</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let allMenu = [], cart = {}, activeFilters = { cat: '', search: '' };
+
+async function init() {
+  try {
+    const [customers, tables, staff, menu] = await Promise.all([
+      API.get('/customers/'), API.get('/tables/'), API.get('/staff/'), API.get('/menu/')
+    ]);
+
+    const selC = document.getElementById('sel-customer');
+    customers.forEach(c => selC.innerHTML += `<option value="${c.Customer_ID}">${c.Name} — ${c.Phone_No}</option>`);
+
+    const selT = document.getElementById('sel-table');
+    tables.filter(t => t.Status === 'Available').forEach(t =>
+      selT.innerHTML += `<option value="${t.Table_ID}">Table ${t.Table_ID} (${t.Capacity} seats, ${t.Location})</option>`
+    );
+
+    const selS = document.getElementById('sel-staff');
+    staff.filter(s => ['Waiter','Host'].includes(s.Role)).forEach(s =>
+      selS.innerHTML += `<option value="${s.Staff_ID}">${s.Name} — ${s.Role}</option>`
+    );
+
+    allMenu = menu;
+    renderMenu();
+  } catch(e) { showToast('Could not load data. Is the backend running?', 'error'); }
+}
+
+function renderMenu() {
+  let items = allMenu;
+  if (activeFilters.cat)    items = items.filter(i => i.Category === activeFilters.cat);
+  if (activeFilters.search) items = items.filter(i => i.Item_Name.toLowerCase().includes(activeFilters.search.toLowerCase()));
+
+  const grid = document.getElementById('menu-grid');
+  if (!items.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🍽️</div><h3>No items found</h3></div>'; return; }
+
+  grid.innerHTML = items.map(item => `
+    <div class="rec-card" style="cursor:pointer" onclick="addToCart(${item.Item_ID},'${item.Item_Name.replace(/'/g,"\\'")}',${item.Price})">
+      <div class="rec-emoji">${categoryEmoji(item.Category)}</div>
+      <div class="rec-name">${item.Item_Name}</div>
+      <div class="rec-category">${item.Category}</div>
+      <div class="rec-price">${formatCurrency(item.Price)}</div>
+      <div class="rec-meta">
+        <span class="rec-rating">${stars(item.Rating)}</span>
+        <span style="font-size:0.72rem;color:var(--text-muted)">${item.Rating}</span>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px">+ Add</button>
+    </div>`).join('');
+}
+
+function addToCart(id, name, price) {
+  if (!cart[id]) cart[id] = { id, name, price, qty: 0 };
+  cart[id].qty++;
+  renderCart();
+  showToast(`${name} added to cart`, 'success');
+}
+
+function changeQty(id, delta) {
+  if (!cart[id]) return;
+  cart[id].qty += delta;
+  if (cart[id].qty <= 0) delete cart[id];
+  renderCart();
+}
+
+function renderCart() {
+  const items = Object.values(cart);
+  const cartEl = document.getElementById('cart-items');
+  const totalSection = document.getElementById('cart-total-section');
+  document.getElementById('cart-count').textContent = `${items.reduce((a,i)=>a+i.qty,0)} items`;
+
+  if (!items.length) {
+    cartEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🛒</div><h3>Cart is empty</h3><p>Add items from the menu</p></div>';
+    totalSection.style.display = 'none'; return;
+  }
+
+  cartEl.innerHTML = items.map(i => `
+    <div class="cart-item">
+      <div><div class="cart-item-name">${i.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">${formatCurrency(i.price)} each</div></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(${i.id},-1)">−</button>
+          <span class="qty-value">${i.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${i.id},1)">+</button>
+        </div>
+        <div class="cart-item-price">${formatCurrency(i.price * i.qty)}</div>
+      </div>
+    </div>`).join('');
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = subtotal * 0.05;
+  const total = subtotal + tax;
+  document.getElementById('subtotal-val').textContent = formatCurrency(subtotal);
+  document.getElementById('tax-val').textContent = formatCurrency(tax);
+  document.getElementById('total-val').textContent = formatCurrency(total);
+  totalSection.style.display = 'block';
+}
+
+document.getElementById('place-order-btn').addEventListener('click', async () => {
+  const customerId = document.getElementById('sel-customer').value;
+  const tableId    = document.getElementById('sel-table').value;
+  const staffId    = document.getElementById('sel-staff').value;
+  if (!customerId || !tableId || !staffId) { showToast('Please select customer, table & staff', 'error'); return; }
+  const items = Object.values(cart);
+  if (!items.length) { showToast('Cart is empty', 'error'); return; }
+
+  const body = {
+    customer_id: +customerId, table_id: +tableId, staff_id: +staffId,
+    payment_mode: document.getElementById('sel-payment-mode').value,
+    notes: document.getElementById('inp-notes').value,
+    items: items.map(i => ({ item_id: i.id, quantity: i.qty, price: i.price }))
+  };
+
+  try {
+    const res = await API.post('/orders/', body);
+    document.getElementById('success-order-id').textContent = '#' + res.order_id;
+    document.getElementById('success-total').textContent = formatCurrency(res.total);
+    document.getElementById('success-modal').classList.add('open');
+    cart = {}; renderCart();
+  } catch(e) { showToast(e.error || 'Order failed', 'error'); }
+});
+
+// Category filter buttons
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => { b.className = 'btn btn-secondary btn-sm cat-btn'; });
+    btn.className = 'btn btn-primary btn-sm cat-btn';
+    activeFilters.cat = btn.dataset.cat;
+    renderMenu();
+  });
+});
+
+document.getElementById('menu-search').addEventListener('input', e => {
+  activeFilters.search = e.target.value;
+  renderMenu();
+});
+
+document.getElementById('success-modal').addEventListener('click', e => {
+  if (e.target.id === 'success-modal') e.target.classList.remove('open');
+});
+
+init();
+</script>
+</body>
+</html>

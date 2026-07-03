@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — La Maison Restaurant</title>
+  <meta name="description"
+    content="Restaurant Order Management System — real-time dashboard with revenue, orders, and top dishes." />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">🍽️</span>
+        <h2>La Maison</h2>
+        <span>Restaurant Management</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="index.html" class="nav-link active"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="orders.html" class="nav-link"><span class="nav-icon">🧾</span> Orders <span class="nav-badge"
+            id="active-badge">0</span></a>
+        <a href="new-order.html" class="nav-link"><span class="nav-icon">➕</span> New Order</a>
+        <a href="payment.html" class="nav-link"><span class="nav-icon">💳</span> Payments</a>
+        <div class="nav-section-label">Catalog</div>
+        <a href="menu.html" class="nav-link"><span class="nav-icon">📋</span> Menu Items</a>
+        <a href="recommend.html" class="nav-link"><span class="nav-icon">🤖</span> AI Recommendations</a>
+        <div class="nav-section-label">People</div>
+        <a href="customers.html" class="nav-link"><span class="nav-icon">👥</span> Customers</a>
+        <a href="staff.html" class="nav-link"><span class="nav-icon">👨‍🍳</span> Staff</a>
+        <a href="tables.html" class="nav-link"><span class="nav-icon">🪑</span> Tables</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="connection-dot"></span> MySQL Connected
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1>Dashboard</h1>
+          <p>Welcome back! Here's what's happening today.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="topbar-time" id="topbar-clock"></span>
+          <a href="new-order.html" class="btn btn-primary">➕ New Order</a>
+        </div>
+      </header>
+
+      <div class="page-content">
+
+        <!-- Stats row -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="stat-revenue">—</div>
+            <div class="stat-label">Today's Revenue</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon" style="background:rgba(16,185,129,.15)">🧾</div>
+            <div class="stat-value" id="stat-orders">—</div>
+            <div class="stat-label">Orders Today</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon" style="background:rgba(59,130,246,.15)">⚡</div>
+            <div class="stat-value" id="stat-active">—</div>
+            <div class="stat-label">Active Orders</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon" style="background:rgba(139,92,246,.15)">👥</div>
+            <div class="stat-value" id="stat-customers">—</div>
+            <div class="stat-label">Total Customers</div>
+          </div>
+          <div class="stat-card pink">
+            <div class="stat-icon" style="background:rgba(236,72,153,.15)">🪑</div>
+            <div class="stat-value" id="stat-tables">—</div>
+            <div class="stat-label">Available Tables</div>
+          </div>
+        </div>
+
+        <!-- Charts + Top dishes -->
+        <div class="dashboard-grid">
+          <!-- Revenue chart -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📈 Weekly Revenue</div>
+                <div class="card-subtitle">Last 7 days</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Top dishes -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Top Selling Dishes</div>
+            </div>
+            <div id="top-items-list"></div>
+          </div>
+
+          <!-- Recent orders -->
+          <div class="card col-full">
+            <div class="card-header">
+              <div class="card-title">🕐 Recent Orders</div>
+              <a href="orders.html" class="btn btn-secondary btn-sm">View All</a>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-orders-body">
+                  <tr>
+                    <td colspan="6" class="loading-state">
+                      <div class="spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-content -->
+    </div><!-- /main -->
+  </div><!-- /layout -->
+
+  <script src="js/api.js"></script>
+  <script>
+    async function loadDashboard() {
+      try {
+        const data = await API.get('/dashboard');
+
+        document.getElementById('stat-revenue').textContent = formatCurrency(data.revenue_today);
+        document.getElementById('stat-orders').textContent = data.orders_today;
+        document.getElementById('stat-active').textContent = data.active_orders;
+        document.getElementById('stat-customers').textContent = data.total_customers;
+        document.getElementById('stat-tables').textContent = data.available_tables;
+        document.getElementById('active-badge').textContent = data.active_orders;
+
+        // Weekly revenue chart
+        const labels = (data.weekly_revenue || []).map(r => formatDateShort(r.day));
+        const values = (data.weekly_revenue || []).map(r => parseFloat(r.revenue));
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Revenue (₹)',
+              data: values,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245,158,11,0.1)',
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#f59e0b',
+              pointRadius: 5
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+              y: {
+                ticks: { color: '#94a3b8', callback: v => '₹' + v.toLocaleString('en-IN') },
+                grid: { color: 'rgba(255,255,255,0.04)' }
+              }
+            }
+          }
+        });
+
+        // Top items
+        const topList = document.getElementById('top-items-list');
+        topList.innerHTML = (data.top_items || []).map((item, i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+        <span style="font-size:1.4rem;min-width:32px;text-align:center">${['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i]}</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.9rem">${item.Item_Name}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">${item.Category}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="color:var(--accent);font-weight:700">${item.Times_Ordered} orders</div>
+          <div style="color:#fbbf24;font-size:0.75rem">${stars(item.Rating)} ${item.Rating}</div>
+        </div>
+      </div>`).join('');
+
+        // Recent orders
+        const tbody = document.getElementById('recent-orders-body');
+        tbody.innerHTML = (data.recent_orders || []).map(o => `
+      <tr>
+        <td class="primary">#${o.Order_ID}</td>
+        <td>${o.customer}</td>
+        <td style="color:var(--accent);font-weight:700">${formatCurrency(o.Total_Price)}</td>
+        <td>${statusBadge(o.Order_Status)}</td>
+        <td>${formatDate(o.Order_Date)}</td>
+        <td><a href="orders.html#order-${o.Order_ID}" class="btn btn-secondary btn-sm">View</a></td>
+      </tr>`).join('');
+
+      } catch (e) {
+        showToast('Backend not connected. Start Flask server first!', 'error');
+        // Show demo data when backend is offline
+        document.getElementById('stat-revenue').textContent = '₹12,450';
+        document.getElementById('stat-orders').textContent = '24';
+        document.getElementById('stat-active').textContent = '5';
+        document.getElementById('stat-customers').textContent = '5';
+        document.getElementById('stat-tables').textContent = '6';
+        document.getElementById('recent-orders-body').innerHTML = `
+      <tr><td colspan="6" class="loading-state">
+        <div class="empty-state-icon">🔌</div>
+        <p>Start the Flask backend to see live data.</p>
+      </td></tr>`;
+      }
+    }
+    loadDashboard();
+  </script>
+</body>
+
+</html>
